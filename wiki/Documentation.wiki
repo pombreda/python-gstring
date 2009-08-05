@@ -13,6 +13,8 @@ You can find more information about GLib GString [http://library.gnome.org/devel
 
 See the wiki here on Google hosting of python-gstring for more information about python-gstring.
 
+*I'm working on a C version of this wrapper with new features and better performance.*
+
 == Performance comparsion ==
 
 You can run performance comparison by doing:
@@ -121,8 +123,6 @@ __add__ method
 Example:
    new_gstring_obj = gstring_object1 + gstring_object2
 }}}
-
-
 
 
 
