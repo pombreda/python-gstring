@@ -320,36 +320,39 @@ GStringType_get_allocated_len(PyObject *self, PyObject *args, PyObject* kwds)
 static int
 GStringType_set_item(GStringType *self, PyObject *key, PyObject *value)
 {
-	glong pos = 0;
+	Py_ssize_t pos = 0;
 
-	if(!PyInt_Check(key)) {
-		PyErr_SetString(PyExc_TypeError, "the key index must be integer");
+	if (PyIndex_Check(key)) {
+			pos = PyNumber_AsSsize_t(key, PyExc_IndexError);
+			if (pos == -1 && PyErr_Occurred()) return -1;
+			if (pos < 0) pos += self->gstring->len;
+			if(pos >= self->gstring->len) {
+				PyErr_SetString(PyExc_IndexError, "index out of range");
+				return -1;
+			}
+			if(value==NULL) {
+				self->gstring =  g_string_erase(self->gstring, pos, 1);
+				return 0;
+			}
+
+			if(!PyString_Check(value)) {
+				PyErr_SetString(PyExc_TypeError, "the value must be a string with size 1");
+				return -1;
+			}
+			if(PyString_Size(value)!=1) {
+				PyErr_SetString(PyExc_TypeError, "the value must be a string with size 1");
+				return -1;
+			}
+			char *str = PyString_AsString(value);
+			self->gstring = g_string_overwrite(self->gstring, pos, str);
+			return 0;
+	}
+	else {
+		PyErr_Format(PyExc_TypeError,
+				 "string indices must be integers, not %.200s",
+				 Py_TYPE(key)->tp_name);
 		return -1;
 	}
-	pos = PyInt_AS_LONG(key);
-
-	if((pos >= self->gstring->len) || (pos < 0) ) {
-		PyErr_SetString(PyExc_IndexError, "index out of range");
-		return -1;
-	}
-
-	if(value==NULL) {
-		self->gstring =  g_string_erase(self->gstring, pos, 1);
-		return 0;
-	}
-
-	if(!PyString_Check(value)) {
-		PyErr_SetString(PyExc_TypeError, "the value must be a string with size 1");
-		return -1;
-	}
-
-	if(PyString_Size(value)!=1) {
-		PyErr_SetString(PyExc_TypeError, "the value must be a string with size 1");
-		return -1;
-	}
-	char *str = PyString_AsString(value);
-	self->gstring = g_string_overwrite(self->gstring, pos, str);
-	return 0;
 }
 
 
@@ -436,8 +439,6 @@ GStringType_methods[] = {
 			   "before it needs to be reallocated." },
 			   { NULL }
 };
-
-
 
 static PyTypeObject
 GStringPyType = {
