@@ -1,8 +1,26 @@
 /* Author: Christian S. Perone
- * License: GPLv2
+ * License: LGPL
  * Email: christian.perone@gmail.com
  */
 
+/* python-gstringc - A wrapper for GLib::GString
+ * Copyright (C) 2009  Christian S. Perone
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the
+ * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+ * Boston, MA 02111-1307, USA.
+ */
 #include <Python.h>
 #include <glib.h>
 
@@ -155,13 +173,20 @@ GStringType_len(GStringType *self)
 }
 
 static PyObject*
-GStringType_get_item(GStringType *self, int index)
+GStringType_get_item(GStringType *self, PyObject* key)
 {
+	long index;
+	if(!PyInt_Check(key)) {
+		PyErr_SetString(PyExc_IndexError, "index must be integer");
+		return NULL;
+	}
+	index = PyInt_AsLong(key);
 	if(index >= self->gstring->len)
 	{
 		PyErr_SetString(PyExc_IndexError, "index out of range");
 		return NULL;
 	}
+
 	return Py_BuildValue("c", self->gstring->str[index]);
 }
 
@@ -215,7 +240,6 @@ GStringType_get_value(PyObject *self, PyObject *args, PyObject *kwds)
 	return Py_BuildValue("s", self_cast->gstring->str);
 }
 
-
 static PyObject *
 GStringType_from_GStringType(GStringType *string_obj)
 {
@@ -244,19 +268,47 @@ GStringType_get_allocated_len(PyObject *self, PyObject *args, PyObject* kwds)
 	return Py_BuildValue("i", ((GStringType *)self)->gstring->allocated_len);
 }
 
+static int
+GStringType_set_item(GStringType *self, PyObject *key, PyObject *value)
+{
+	glong pos = 0;
 
-static PySequenceMethods
-GStringType_SequenceMethods = {
-		(lenfunc) GStringType_len, /* lenfnuc */
-		0,
-		0,
-		(ssizeargfunc) GStringType_get_item,
-		0,
-		0,
-		0,
-		0,
-		0,
-		0
+	if(!PyInt_Check(key)) {
+		PyErr_SetString(PyExc_TypeError, "the key index must be integer");
+		return -1;
+	}
+	pos = PyInt_AS_LONG(key);
+
+	if((pos >= self->gstring->len) || (pos < 0) ) {
+		PyErr_SetString(PyExc_IndexError, "index out of range");
+		return -1;
+	}
+
+	if(value==NULL) {
+		self->gstring =  g_string_erase(self->gstring, pos, 1);
+		return 0;
+	}
+
+	if(!PyString_Check(value)) {
+		PyErr_SetString(PyExc_TypeError, "the value must be a string with size 1");
+		return -1;
+	}
+
+	if(PyString_Size(value)!=1) {
+		PyErr_SetString(PyExc_TypeError, "the value must be a string with size 1");
+		return -1;
+	}
+	char *str = PyString_AsString(value);
+	self->gstring = g_string_overwrite(self->gstring, pos, str);
+	return 0;
+}
+
+
+static PyMappingMethods
+GStringType_MappingMethods = {
+		(lenfunc) GStringType_len,
+		(binaryfunc) GStringType_get_item,
+		(objobjargproc) GStringType_set_item
 };
 
 static PyNumberMethods
@@ -352,8 +404,8 @@ GStringPyType = {
    (cmpfunc)GStringType_compare,                         /* tp_compare */
    0,                         /* tp_repr */
    &GStringType_NumberMethods,                         /* tp_as_number */
-   &GStringType_SequenceMethods,                         /* tp_as_sequence */
-   0,                         /* tp_as_mapping */
+   0,                         /* tp_as_sequence */
+   &GStringType_MappingMethods,                         /* tp_as_mapping */
    (hashfunc) GStringType_hash,                         /* tp_hash */
    0,                         /* tp_call */
    (reprfunc) GStringType_str,           /* tp_str */
