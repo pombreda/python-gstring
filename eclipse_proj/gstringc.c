@@ -72,7 +72,7 @@ GStringType_assign(GStringType *self, PyObject *args, PyObject *kwds)
 }
 
 inline static PyObject*
-GStringType_append(GStringType *self, PyObject *args, PyObject *kwds)
+GStringType_append(register GStringType *self, register PyObject *args, register PyObject *kwds)
 {
 	const gchar *string;
 	if(!PyArg_ParseTuple(args, "s", &string)) return NULL;
@@ -202,9 +202,9 @@ GStringType_add(PyObject *self, PyObject *other)
 }
 
 inline static PyObject*
-GStringType_inplace_add(PyObject *self, PyObject *other)
+GStringType_inplace_add(register PyObject *self, register PyObject *other)
 {
-	GStringType *self_cast = (GStringType*) self;
+	register GStringType *self_cast = (GStringType*) self;
 
 	if(PyString_Check(other)) {
 		self_cast->gstring = g_string_append(self_cast->gstring, PyString_AS_STRING(other));
