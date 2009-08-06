@@ -34,8 +34,13 @@ typedef struct {
 
 static PyTypeObject GStringPyType;
 
+void initgstringc(void);
 static int GStringType_init(GStringType *self, PyObject *args, PyObject *kwds);
 static void GStringType_dealloc(PyObject *self);
+
+static PyObject* GStringType_FromGStringType(GStringType *string_obj);
+static PyObject* GStringType_FromString(const gchar *string);
+
 static PyObject* GStringType_str(GStringType *self);
 static PyObject* GStringType_assign(GStringType *self, PyObject *args, PyObject *kwds);
 static PyObject* GStringType_append(register GStringType *self, register PyObject *args, register PyObject *kwds);
@@ -49,13 +54,13 @@ static PyObject* GStringType_get_item(GStringType *self, PyObject* key);
 static PyObject* GStringType_add(PyObject *self, PyObject *other);
 static PyObject* GStringType_inplace_add(register PyObject *self, register PyObject *other);
 static PyObject* GStringType_get_value(GStringType *self, PyObject *args, PyObject *kwds);
-static PyObject* GStringType_FromGStringType(GStringType *string_obj);
-static PyObject* GStringType_FromString(const gchar *string);
 static PyObject* GStringType_get_allocated_len(PyObject *self, PyObject *args, PyObject* kwds);
+static PyObject* GStringType_ascii_up(GStringType *self, PyObject *args, PyObject *kwds);
+static PyObject* GStringType_ascii_down(GStringType *self, PyObject *args, PyObject *kwds);
 static long GStringType_hash(GStringType *self);
 static int GStringType_compare(GStringType *self, GStringType *other);
 static int GStringType_len(GStringType *self);
 static int GStringType_set_item(GStringType *self, PyObject *key, PyObject *value);
-void initgstringc(void);
+
 
 #endif /* GSTRINGC_H_ */
