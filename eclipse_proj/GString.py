@@ -176,18 +176,19 @@ def run_test1():
    import cStringIO
    import gstringc
 
+   str_size    = 70
    string      = ""
-   text_to_add = "x" * 40
-   iterations  = 100000*8
+   text_to_add = "x" * str_size
+   iterations  = 100000*25
    
-   #print "Timing the Python native str..."
-   #gc.collect()
-   #time.sleep(1)
-   #begin = time.time()
-   #for i in xrange(iterations):
-   #   string += text_to_add
-   #end = time.time()
-   #print "Time using Python (str): %.2fs" % (end-begin)
+   print "Timing the Python native str..."
+   gc.collect()
+   time.sleep(1)
+   begin = time.time()
+   for i in xrange(iterations):
+      string += text_to_add
+   end = time.time()
+   print "Time using Python (str): %.2fs" % (end-begin)
 
    print "Timing the GString of GLib..."
    gc.collect()
@@ -235,7 +236,7 @@ def run_test1():
    string.close()
 
    end = time.time()
-
+   cStringIO_time = end-begin
    print "Time using Python (cStringIO): %.2fs" %(end-begin)
 
    print "Timing the gstringc.GString of GLib..."
@@ -249,12 +250,13 @@ def run_test1():
    for i in xrange(iterations):
       string += text_to_add
    end = time.time()
+   GString_time = end-begin
    print "Time using GLib (gstringc.GString): %.2fs" %(end-begin)
 
    print "Timing the gstringc.GString+gstringc.GString of GLib..."
    gc.collect()
    time.sleep(1)
-   text_to_add_gstring = gstringc.GString("x" * 40)
+   text_to_add_gstring = gstringc.GString("x" * str_size)
    begin = time.time()
    string = gstringc.GString("",iterations*len(text_to_add_gstring))
    for i in xrange(iterations):
@@ -268,7 +270,7 @@ def run_test1():
    print "Timing the gstringc.GString+gstringc.GString of GLib (no initial size)..."
    gc.collect()
    time.sleep(1)
-   text_to_add_gstring = gstringc.GString("x" * 40)
+   text_to_add_gstring = gstringc.GString("x" * str_size)
    begin = time.time()
    string = gstringc.GString("")
    for i in xrange(iterations):
@@ -293,6 +295,7 @@ def run_test1():
    end = time.time()
    print "Time using GLib (gstringc.GString/append): %.2fs" %(end-begin)
 
+   print "Performance: %.2f%%" % (GString_time*100.0/cStringIO_time)
 
 if __name__ == "__main__":
    run_test1()
