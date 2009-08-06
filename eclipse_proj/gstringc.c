@@ -28,17 +28,24 @@
 static int
 GStringType_init(GStringType *self, PyObject *args, PyObject *kwds)
 {
-	const gchar *string = NULL;
-	int	  size;
+	char *kwlist[] = {"text", "size", NULL};
+	int	  size = DEFAULT_GSTRING_SIZE;
+	PyObject *text = NULL;
 
-	if (!PyArg_ParseTuple(args, "|si", &string, &size)) return -1;
+	/* Oi LOL ! */
+	if(!PyArg_ParseTupleAndKeywords(args, kwds, "|Oi", kwlist, &text, &size))
+		return -1;
 
-	if(string==NULL) string = "";
+	/* If the "text" is not present, use "" as default */
+	text = (text==NULL) ? PyString_FromString(DEFAULT_GSTRING_TEXT) : text;
+
+	if(!PyString_Check(text))
+		text = PyObject_Str(text);
 
 	if(size>0) {
 		self->gstring = g_string_sized_new(size);
-		self->gstring = g_string_assign(self->gstring, string);
-	} else self->gstring = g_string_new(string);
+		self->gstring = g_string_assign(self->gstring, PyString_AS_STRING(text));
+	} else self->gstring = g_string_new(PyString_AS_STRING(text));
 
 	if(self->gstring==NULL) {
 		PyErr_SetString(PyExc_MemoryError, "GLib::GString cannot allocate memory for GString");
@@ -49,16 +56,18 @@ GStringType_init(GStringType *self, PyObject *args, PyObject *kwds)
 }
 
 static void
-GStringType_dealloc(GStringType *self)
+GStringType_dealloc(PyObject *self)
 {
-	if(self->gstring != NULL) g_string_free(self->gstring, TRUE);
-	self->ob_type->tp_free((PyObject*)self);
+	GStringType *self_cast = (GStringType*) self;
+	if(self_cast->gstring != NULL)
+		g_string_free(self_cast->gstring, TRUE);
+	Py_TYPE(self)->tp_free(self);
 }
 
 static PyObject*
 GStringType_str(GStringType *self)
 {
-	return Py_BuildValue("s", self->gstring->str);
+	return PyString_FromString(self->gstring->str);
 }
 
 static PyObject*
@@ -71,8 +80,10 @@ GStringType_assign(GStringType *self, PyObject *args, PyObject *kwds)
 	return Py_None;
 }
 
-inline static PyObject*
-GStringType_append(register GStringType *self, register PyObject *args, register PyObject *kwds)
+static PyObject*
+GStringType_append(register GStringType *self,
+				   register PyObject *args,
+		           register PyObject *kwds)
 {
 	const gchar *string;
 	if(!PyArg_ParseTuple(args, "s", &string)) return NULL;
@@ -161,22 +172,65 @@ GStringType_len(GStringType *self)
 	return self->gstring->len;
 }
 
+/*
+ * This is based on the Python native str __getitem__ implementation
+ * but uses GLib Memory Slices for allocation and deallocation.
+ */
 static PyObject*
 GStringType_get_item(GStringType *self, PyObject* key)
 {
-	long index;
-	if(!PyInt_Check(key)) {
-		PyErr_SetString(PyExc_IndexError, "index must be integer");
-		return NULL;
-	}
-	index = PyInt_AsLong(key);
-	if(index >= self->gstring->len)
-	{
-		PyErr_SetString(PyExc_IndexError, "index out of range");
-		return NULL;
-	}
+	if (PyIndex_Check(key)) {
+			Py_ssize_t index = PyNumber_AsSsize_t(key, PyExc_IndexError);
+			if (index == -1 && PyErr_Occurred()) return NULL;
+			if (index < 0) index += self->gstring->len;
+			return Py_BuildValue("c", self->gstring->str[index]);
+	} else if (PySlice_Check(key)) {
+		Py_ssize_t start, stop, step, slicelength, cur, i;
+		char* source_buf;
+		char* result_buf;
+		PyObject* result;
 
-	return Py_BuildValue("c", self->gstring->str[index]);
+		if (PySlice_GetIndicesEx((PySliceObject*)key,
+				 self->gstring->len,
+				 &start, &stop, &step, &slicelength) < 0) {
+			return NULL;
+		}
+
+		if (slicelength <= 0) {
+			return PyString_FromStringAndSize("", 0);
+		}
+		else if (start == 0 && step == 1 &&
+			 slicelength == self->gstring->len)	{
+			return PyString_FromString(self->gstring->str);
+		}
+		else if (step == 1) {
+			return PyString_FromStringAndSize(
+				self->gstring->str + start,
+				slicelength);
+		}
+		else {
+			source_buf = self->gstring->str;
+			result_buf = (char *)g_slice_alloc(slicelength);
+			if (result_buf == NULL)
+				return PyErr_NoMemory();
+
+			for (cur = start, i = 0; i < slicelength;
+			     cur += step, i++) {
+				result_buf[i] = source_buf[cur];
+			}
+
+			result = PyString_FromStringAndSize(result_buf,
+							    slicelength);
+			g_slice_free1(slicelength, result_buf);
+			return result;
+		}
+	}
+	else {
+		PyErr_Format(PyExc_TypeError,
+			     "string indices must be integers, not %.200s",
+			     Py_TYPE(key)->tp_name);
+		return NULL;
+	}
 }
 
 static PyObject*
@@ -201,12 +255,16 @@ GStringType_add(PyObject *self, PyObject *other)
 	return Py_NotImplemented;
 }
 
-inline static PyObject*
+static PyObject*
 GStringType_inplace_add(register PyObject *self, register PyObject *other)
 {
 	register GStringType *self_cast = (GStringType*) self;
 
 	if(PyString_Check(other)) {
+		/*long new_size = self_cast->gstring->len + PyString_Size(other);
+		if(new_size > self_cast->gstring->allocated_len)
+			self_cast->gstring = g_string_set_size(self_cast->gstring, new_size);*/
+
 		self_cast->gstring = g_string_append(self_cast->gstring, PyString_AS_STRING(other));
 		Py_INCREF(self);
 		return self;
