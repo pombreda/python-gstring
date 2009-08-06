@@ -11,10 +11,10 @@ typedef struct {
 	GString *gstring;
 } GStringType;
 
-PyObject *
+static PyObject *
 GStringType_from_GStringType(GStringType *string_obj);
 
-PyObject *
+static PyObject *
 GStringType_from_String(const gchar *string);
 
 static PyTypeObject GStringPyType;
@@ -136,25 +136,25 @@ GStringType_set_size(GStringType *self, PyObject *args, PyObject *kwds)
 	return Py_None;
 }
 
-long
+static long
 GStringType_hash(GStringType *self)
 {
 	return g_string_hash(self->gstring);
 }
 
-int
+static int
 GStringType_compare(GStringType *self, GStringType *other)
 {
 	return !g_string_equal(self->gstring, other->gstring);
 }
 
-int
+static int
 GStringType_len(GStringType *self)
 {
 	return self->gstring->len;
 }
 
-PyObject*
+static PyObject*
 GStringType_get_item(GStringType *self, int index)
 {
 	if(index >= self->gstring->len)
@@ -165,7 +165,7 @@ GStringType_get_item(GStringType *self, int index)
 	return Py_BuildValue("c", self->gstring->str[index]);
 }
 
-PyObject*
+static PyObject*
 GStringType_add(PyObject *self, PyObject *other)
 {
 	GStringType *str = NULL;
@@ -187,7 +187,36 @@ GStringType_add(PyObject *self, PyObject *other)
 	return Py_NotImplemented;
 }
 
-PyObject *
+static PyObject*
+GStringType_inplace_add(PyObject *self, PyObject *other)
+{
+	GStringType *self_cast = (GStringType*) self;
+
+	if(PyString_Check(other)) {
+		self_cast->gstring = g_string_append(self_cast->gstring, PyString_AsString(other));
+		Py_INCREF(self);
+		return self;
+	}
+
+	if(PyObject_TypeCheck(other, &GStringPyType)) {
+		self_cast->gstring = g_string_append(self_cast->gstring, ((GStringType*)other)->gstring->str);
+		Py_INCREF(self);
+		return self;
+	}
+
+	Py_INCREF(Py_NotImplemented);
+	return Py_NotImplemented;
+}
+
+static PyObject*
+GStringType_get_value(PyObject *self, PyObject *args, PyObject *kwds)
+{
+	GStringType* self_cast = (GStringType *) self;
+	return Py_BuildValue("s", self_cast->gstring->str);
+}
+
+
+static PyObject *
 GStringType_from_GStringType(GStringType *string_obj)
 {
 	GStringType *op;
@@ -198,7 +227,7 @@ GStringType_from_GStringType(GStringType *string_obj)
 	return (PyObject *) op;
 }
 
-PyObject *
+static PyObject *
 GStringType_from_String(const gchar *string)
 {
 	GStringType *op;
@@ -207,6 +236,12 @@ GStringType_from_String(const gchar *string)
 	PyObject_INIT(op, &GStringPyType);
 	op->gstring = g_string_new(string);
 	return (PyObject *) op;
+}
+
+static PyObject*
+GStringType_get_allocated_len(PyObject *self, PyObject *args, PyObject* kwds)
+{
+	return Py_BuildValue("i", ((GStringType *)self)->gstring->allocated_len);
 }
 
 
@@ -249,7 +284,7 @@ GStringType_NumberMethods = {
 	0,
 	0,
 	0,
-	0,
+	(binaryfunc) GStringType_inplace_add, /* binaryfunc nb_inplace_add */
 	0,
 	0,
 	0,
@@ -293,17 +328,15 @@ GStringType_methods[] = {
    { "set_size",    (PyCFunction) GStringType_set_size, METH_VARARGS,
 			   "Sets the length of a GString. If the length is less than the"
 			   "current length, the string will be truncated." },
+   { "get_value",    (PyCFunction) GStringType_get_value, METH_VARARGS,
+			   "Get the string in the buffer of the GString." },
+   { "get_allocated_len",    (PyCFunction) GStringType_get_allocated_len, METH_VARARGS,
+			   "Get the number of bytes that can be stored in the string"
+			   "before it needs to be reallocated." },
 			   { NULL }
 };
 
-/*
-static PyMemberDef
-GStringType_members[] = {
-   { "string",   T_STRING, offsetof(GStringType, gstring->str), 0,
-               "The internal string." },
-   { NULL }
-};
-*/
+
 
 static PyTypeObject
 GStringPyType = {
@@ -327,7 +360,7 @@ GStringPyType = {
    0,                         /* tp_getattro */
    0,                         /* tp_setattro */
    0,                         /* tp_as_buffer */
-   Py_TPFLAGS_DEFAULT | Py_TPFLAGS_CHECKTYPES, /* tp_flags*/
+   Py_TPFLAGS_DEFAULT | Py_TPFLAGS_CHECKTYPES | Py_TPFLAGS_HAVE_INPLACEOPS, /* tp_flags*/
    "GString object",      /* tp_doc */
    0,                         /* tp_traverse */
    0,                         /* tp_clear */
