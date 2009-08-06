@@ -24,6 +24,9 @@
 #ifndef GSTRINGC_H_
 #define GSTRINGC_H_
 
+#define DEFAULT_GSTRING_SIZE 128
+#define DEFAULT_GSTRING_TEXT ""
+
 typedef struct {
 	PyObject_HEAD
 	GString *gstring;
@@ -34,10 +37,10 @@ static PyTypeObject GStringPyType;
 static PyObject *GStringType_from_GStringType(GStringType *string_obj);
 static PyObject *GStringType_from_String(const gchar *string);
 static int GStringType_init(GStringType *self, PyObject *args, PyObject *kwds);
-static void GStringType_dealloc(GStringType *self);
+static void GStringType_dealloc(PyObject *self);
 static PyObject* GStringType_str(GStringType *self);
 static PyObject* GStringType_assign(GStringType *self, PyObject *args, PyObject *kwds);
-inline static PyObject* GStringType_append(GStringType *self, PyObject *args, PyObject *kwds);
+static PyObject* GStringType_append(register GStringType *self, register PyObject *args, register PyObject *kwds);
 static PyObject* GStringType_prepend(GStringType *self, PyObject *args, PyObject *kwds);
 static PyObject* GStringType_insert(GStringType *self, PyObject *args, PyObject *kwds);
 static PyObject* GStringType_overwrite(GStringType *self, PyObject *args, PyObject *kwds);
@@ -46,7 +49,7 @@ static PyObject* GStringType_truncate(GStringType *self, PyObject *args, PyObjec
 static PyObject* GStringType_set_size(GStringType *self, PyObject *args, PyObject *kwds);
 static PyObject* GStringType_get_item(GStringType *self, PyObject* key);
 static PyObject* GStringType_add(PyObject *self, PyObject *other);
-inline static PyObject* GStringType_inplace_add(PyObject *self, PyObject *other);
+static PyObject* GStringType_inplace_add(register PyObject *self, register PyObject *other);
 static PyObject* GStringType_get_value(PyObject *self, PyObject *args, PyObject *kwds);
 static PyObject* GStringType_from_GStringType(GStringType *string_obj);
 static PyObject* GStringType_from_String(const gchar *string);
