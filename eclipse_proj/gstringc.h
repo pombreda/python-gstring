@@ -34,8 +34,6 @@ typedef struct {
 
 static PyTypeObject GStringPyType;
 
-static PyObject *GStringType_from_GStringType(GStringType *string_obj);
-static PyObject *GStringType_from_String(const gchar *string);
 static int GStringType_init(GStringType *self, PyObject *args, PyObject *kwds);
 static void GStringType_dealloc(PyObject *self);
 static PyObject* GStringType_str(GStringType *self);
