@@ -50,9 +50,9 @@ static PyObject* GStringType_set_size(GStringType *self, PyObject *args, PyObjec
 static PyObject* GStringType_get_item(GStringType *self, PyObject* key);
 static PyObject* GStringType_add(PyObject *self, PyObject *other);
 static PyObject* GStringType_inplace_add(register PyObject *self, register PyObject *other);
-static PyObject* GStringType_get_value(PyObject *self, PyObject *args, PyObject *kwds);
-static PyObject* GStringType_from_GStringType(GStringType *string_obj);
-static PyObject* GStringType_from_String(const gchar *string);
+static PyObject* GStringType_get_value(GStringType *self, PyObject *args, PyObject *kwds);
+static PyObject* GStringType_FromGStringType(GStringType *string_obj);
+static PyObject* GStringType_FromString(const gchar *string);
 static PyObject* GStringType_get_allocated_len(PyObject *self, PyObject *args, PyObject* kwds);
 static long GStringType_hash(GStringType *self);
 static int GStringType_compare(GStringType *self, GStringType *other);

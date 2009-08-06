@@ -237,22 +237,25 @@ static PyObject*
 GStringType_add(PyObject *self, PyObject *other)
 {
 	GStringType *str = NULL;
-
-	if(PyString_Check(other)) {
-		str = (GStringType*)GStringType_from_GStringType( (GStringType*)self);
+	if(PyString_Check(other) && PyObject_TypeCheck(self, &GStringPyType)) {
+		str = (GStringType*)GStringType_FromGStringType( (GStringType*)self);
 		str->gstring = g_string_append(str->gstring, PyString_AsString(other));
 		return (PyObject *) str;
 	}
-
-	if(PyObject_TypeCheck(other, &GStringPyType)) {
+	else if(PyString_Check(self) && PyObject_TypeCheck(other, &GStringPyType)) {
 		const gchar *st = PyString_AsString(self);
-		str = (GStringType*)GStringType_from_String(st);
+		str = (GStringType*)GStringType_FromString(st);
 		str->gstring = g_string_append(str->gstring, ((GStringType*)other)->gstring->str);
 		return (PyObject *) str;
 	}
-
-	Py_INCREF(Py_NotImplemented);
-	return Py_NotImplemented;
+	else if(PyObject_TypeCheck(other, &GStringPyType) && PyObject_TypeCheck(self, &GStringPyType)) {
+		str = (GStringType*)GStringType_FromGStringType( (GStringType*)self);
+		str->gstring = g_string_append(str->gstring, ((GStringType*)other)->gstring->str);
+		return (PyObject *) str;
+	} else {
+		Py_INCREF(Py_NotImplemented);
+		return Py_NotImplemented;
+	}
 }
 
 static PyObject*
@@ -271,6 +274,10 @@ GStringType_inplace_add(register PyObject *self, register PyObject *other)
 	}
 
 	if(PyObject_TypeCheck(other, &GStringPyType)) {
+		long new_size = self_cast->gstring->len + ((GStringType*)other)->gstring->len;
+		if(new_size > self_cast->gstring->allocated_len)
+			self_cast->gstring = g_string_set_size(self_cast->gstring, new_size);
+
 		self_cast->gstring = g_string_append(self_cast->gstring, ((GStringType*)other)->gstring->str);
 		Py_INCREF(self);
 		return self;
@@ -281,30 +288,25 @@ GStringType_inplace_add(register PyObject *self, register PyObject *other)
 }
 
 static PyObject*
-GStringType_get_value(PyObject *self, PyObject *args, PyObject *kwds)
+GStringType_get_value(GStringType *self, PyObject *args, PyObject *kwds)
 {
-	GStringType* self_cast = (GStringType *) self;
-	return Py_BuildValue("s", self_cast->gstring->str);
+	return PyString_FromString(self->gstring->str);
 }
 
 static PyObject *
-GStringType_from_GStringType(GStringType *string_obj)
+GStringType_FromGStringType(GStringType *string_obj)
 {
-	GStringType *op;
-	op = (GStringType *) PyObject_MALLOC(sizeof(GStringType));
+	GStringType *op = PyObject_NEW(GStringType, &GStringPyType);
 	if (op == NULL) return PyErr_NoMemory();
-	PyObject_INIT(op, &GStringPyType);
 	op->gstring = g_string_new(string_obj->gstring->str);
 	return (PyObject *) op;
 }
 
 static PyObject *
-GStringType_from_String(const gchar *string)
+GStringType_FromString(const gchar *string)
 {
-	GStringType *op;
-	op = (GStringType *) PyObject_MALLOC(sizeof(GStringType));
+	GStringType *op = PyObject_NEW(GStringType, &GStringPyType);
 	if (op == NULL) return PyErr_NoMemory();
-	PyObject_INIT(op, &GStringPyType);
 	op->gstring = g_string_new(string);
 	return (PyObject *) op;
 }
@@ -312,7 +314,7 @@ GStringType_from_String(const gchar *string)
 static PyObject*
 GStringType_get_allocated_len(PyObject *self, PyObject *args, PyObject* kwds)
 {
-	return Py_BuildValue("i", ((GStringType *)self)->gstring->allocated_len);
+	return PyInt_FromLong(((GStringType *)self)->gstring->allocated_len);
 }
 
 static int
