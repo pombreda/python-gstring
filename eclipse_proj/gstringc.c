@@ -23,21 +23,10 @@
  */
 #include <Python.h>
 #include <glib.h>
+#include "gstringc.h"
 
-typedef struct {
-	PyObject_HEAD
-	GString *gstring;
-} GStringType;
-
-static PyObject *
-GStringType_from_GStringType(GStringType *string_obj);
-
-static PyObject *
-GStringType_from_String(const gchar *string);
-
-static PyTypeObject GStringPyType;
-
-static int GStringType_init(GStringType *self, PyObject *args, PyObject *kwds)
+static int
+GStringType_init(GStringType *self, PyObject *args, PyObject *kwds)
 {
 	const gchar *string = NULL;
 	int	  size;
@@ -82,7 +71,7 @@ GStringType_assign(GStringType *self, PyObject *args, PyObject *kwds)
 	return Py_None;
 }
 
-static PyObject*
+inline static PyObject*
 GStringType_append(GStringType *self, PyObject *args, PyObject *kwds)
 {
 	const gchar *string;
@@ -195,7 +184,7 @@ GStringType_add(PyObject *self, PyObject *other)
 {
 	GStringType *str = NULL;
 
-	if(PyObject_TypeCheck(other, &PyString_Type)) {
+	if(PyString_Check(other)) {
 		str = (GStringType*)GStringType_from_GStringType( (GStringType*)self);
 		str->gstring = g_string_append(str->gstring, PyString_AsString(other));
 		return (PyObject *) str;
@@ -212,13 +201,13 @@ GStringType_add(PyObject *self, PyObject *other)
 	return Py_NotImplemented;
 }
 
-static PyObject*
+inline static PyObject*
 GStringType_inplace_add(PyObject *self, PyObject *other)
 {
 	GStringType *self_cast = (GStringType*) self;
 
 	if(PyString_Check(other)) {
-		self_cast->gstring = g_string_append(self_cast->gstring, PyString_AsString(other));
+		self_cast->gstring = g_string_append(self_cast->gstring, PyString_AS_STRING(other));
 		Py_INCREF(self);
 		return self;
 	}
@@ -313,7 +302,7 @@ GStringType_MappingMethods = {
 
 static PyNumberMethods
 GStringType_NumberMethods = {
-	(binaryfunc) GStringType_add, /* (binaryfunc) add PyObject * (*binaryfunc)(PyObject *, PyObject *);*/
+	(binaryfunc) GStringType_add,
 	0,
 	0,
 	0,
@@ -336,7 +325,7 @@ GStringType_NumberMethods = {
 	0,
 	0,
 	0,
-	(binaryfunc) GStringType_inplace_add, /* binaryfunc nb_inplace_add */
+	(binaryfunc) GStringType_inplace_add,
 	0,
 	0,
 	0,
