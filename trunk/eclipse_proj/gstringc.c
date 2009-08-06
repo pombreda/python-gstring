@@ -294,6 +294,22 @@ GStringType_get_value(GStringType *self, PyObject *args, PyObject *kwds)
 }
 
 static PyObject *
+GStringType_ascii_up(GStringType *self, PyObject *args, PyObject *kwds)
+{
+	self->gstring = g_string_ascii_up(self->gstring);
+	Py_INCREF(Py_None);
+	return Py_None;
+}
+
+static PyObject *
+GStringType_ascii_down(GStringType *self, PyObject *args, PyObject *kwds)
+{
+	self->gstring = g_string_ascii_down(self->gstring);
+	Py_INCREF(Py_None);
+	return Py_None;
+}
+
+static PyObject *
 GStringType_FromGStringType(GStringType *string_obj)
 {
 	GStringType *op = PyObject_NEW(GStringType, &GStringPyType);
@@ -437,6 +453,10 @@ GStringType_methods[] = {
    { "get_allocated_len",    (PyCFunction) GStringType_get_allocated_len, METH_VARARGS,
 			   "Get the number of bytes that can be stored in the string"
 			   "before it needs to be reallocated." },
+   { "ascii_up",    (PyCFunction) GStringType_ascii_up, METH_VARARGS,
+			   "Converts all lower case ASCII letters to upper case ASCII letters."},
+   { "ascii_down",    (PyCFunction) GStringType_ascii_down, METH_VARARGS,
+			   "Converts all upper case ASCII letters to lower case ASCII letters."},
 			   { NULL }
 };
 
@@ -444,33 +464,33 @@ static PyTypeObject
 GStringPyType = {
    PyObject_HEAD_INIT(NULL)
    0,                         /* ob_size */
-   "gstringc.GString",                 /* tp_name */
+   "gstringc.GString",        /* tp_name */
    sizeof(GStringType),       /* tp_basicsize */
    0,                         /* tp_itemsize */
    (destructor)GStringType_dealloc, /* tp_dealloc */
    0,                         /* tp_print */
    0,                         /* tp_getattr */
    0,                         /* tp_setattr */
-   (cmpfunc)GStringType_compare,                         /* tp_compare */
+   (cmpfunc)GStringType_compare, /* tp_compare */
    0,                         /* tp_repr */
-   &GStringType_NumberMethods,                         /* tp_as_number */
+   &GStringType_NumberMethods, /* tp_as_number */
    0,                         /* tp_as_sequence */
-   &GStringType_MappingMethods,                         /* tp_as_mapping */
-   (hashfunc) GStringType_hash,                         /* tp_hash */
+   &GStringType_MappingMethods, /* tp_as_mapping */
+   (hashfunc) GStringType_hash, /* tp_hash */
    0,                         /* tp_call */
-   (reprfunc) GStringType_str,           /* tp_str */
+   (reprfunc) GStringType_str, /* tp_str */
    0,                         /* tp_getattro */
    0,                         /* tp_setattro */
    0,                         /* tp_as_buffer */
    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_CHECKTYPES | Py_TPFLAGS_HAVE_INPLACEOPS, /* tp_flags*/
-   "GString object",      /* tp_doc */
+   "GString object",          /* tp_doc */
    0,                         /* tp_traverse */
    0,                         /* tp_clear */
    0,                         /* tp_richcompare */
    0,                         /* tp_weaklistoffset */
    0,                         /* tp_iter */
    0,                         /* tp_iternext */
-   GStringType_methods,        				  /* tp_methods */
+   GStringType_methods,       /* tp_methods */
    0,       				  /* tp_members */
    0,                         /* tp_getset */
    0,                         /* tp_base */
