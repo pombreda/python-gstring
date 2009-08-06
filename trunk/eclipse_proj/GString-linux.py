@@ -1,73 +1,90 @@
-def run_tests(iterations, str_append_size):
-   import time
-   import gc
-   import sys
-   import StringIO
-   import cStringIO
-   import gstringc
+import gstringc
+import cStringIO, StringIO
+import time
+import gc
+import sys
 
-   str_size    = str_append_size
-   text_to_add = "x" * str_size
-   
-   print "Timing native StringIO..."
-   gc.collect()
-   time.sleep(1)
-   begin = time.time()
-   string = StringIO.StringIO()
-   for i in xrange(iterations):
-      string.write(text_to_add)
-   val = string.getvalue()
-   end = time.time()
-   string.close()
-   del string, val
-   print "Time using native StringIO: %.2fs" %(end-begin)
+def time_cstringio(n, iterations, str_len):
+   print "Timing native cStringIO %d times... " % n,
+   cStringIO_time = 0.0
+   text_to_add = "x" * str_len
 
-   print "Timing native cStringIO..."
-   gc.collect()
-   time.sleep(1)
-   begin = time.time()
-   string = cStringIO.StringIO()
-   for i in xrange(iterations):
-      string.write(text_to_add)
-   val = string.getvalue()
-   end = time.time()
-   string.close()
-   del string, val
-   cStringIO_time = end-begin
-   print "Time using native cStringIO: %.2fs" %(end-begin)
+   for i in xrange(n):   
+      print i+1,
+      gc.collect()
+      time.sleep(2)
+      begin = time.time()
+      string = cStringIO.StringIO()
+      for i in xrange(iterations):
+         string.write(text_to_add)
+      val = string.getvalue()
+      end = time.time()
+      string.close()
+      del string, val
+      cStringIO_time+=(end-begin)
+   print "\nTime using native cStringIO %d times: %.2fs" % (n, cStringIO_time/float(n))
+   return cStringIO_time/float(n)
 
-   print "Timing gstringc.GString..."
-   gc.collect()
-   time.sleep(1)
-   begin = time.time()
-   string = gstringc.GString("",iterations*len(text_to_add))
-   for i in xrange(iterations):
-      string += text_to_add
-   x = string.get_value()
-   end = time.time()
-   del x, string
-   GString_time = end-begin
-   print "Time using gstringc.GString: %.2fs" %(end-begin)
+def time_gstringc(n, iterations, str_len):
+   print "Timing gstringc.GString %d times (no initial size)... " % n,
+   GString_time = 0.0
+   text_to_add = "x" * str_len
 
-   print "Timing gstringc.GString (no initial size)..."
-   gc.collect()
-   time.sleep(1)
-   begin = time.time()
-   string = gstringc.GString()
-   for i in xrange(iterations):
-      string += text_to_add
-   x = string.get_value()
-   end = time.time()
-   del x, string
-   GString_time = end-begin
-   gc.collect()
-   time.sleep(1)
-   print "Time using gstringc.GString (no initial size): %.2fs" %(end-begin)
+   for i in xrange(n):
+      print i+1,
+      gc.collect()
+      time.sleep(2)
+      begin = time.time()
+      string = gstringc.GString()
+      for i in xrange(iterations):
+         string += text_to_add
+      x = string.get_value()
+      end = time.time()
+      del x, string
+      GString_time+=(end-begin)
+   print "\nTime using gstringc.GString %d times (no initial size): %.2fs" % (n, GString_time/float(n))
+   return GString_time/float(n)
 
-   print "\n# Performance of gstringc.GString concat (+=) over cStringIO.write: %.2f%%" % (GString_time*100.0/cStringIO_time)
-   print "# In %d iterations using an string with size %d to append\n" % (iterations, len(text_to_add))
+def time_stringio(n, iterations, str_len):
+   print "Timing native StringIO %d times... " % n,
+   StringIO_time = 0.0
+   text_to_add = "x" * str_len
+
+   for i in xrange(n):   
+      print i+1,
+      gc.collect()
+      time.sleep(2)
+      begin = time.time()
+      string = StringIO.StringIO()
+      for i in xrange(iterations):
+         string.write(text_to_add)
+      val = string.getvalue()
+      end = time.time()
+      string.close()
+      del string, val
+      StringIO_time+=(end-begin)
+   print "\nTime using native StringIO %d times: %.2fs" % (n, StringIO_time/float(n))
+   return StringIO_time/float(n)
+
+def run_tests():
+   #print "Timing native StringIO..."
+   #gc.collect()
+   #time.sleep(2)
+   #begin = time.time()
+   #string = StringIO.StringIO()
+   #for i in xrange(iterations):
+   #   string.write(text_to_add)
+   #val = string.getvalue()
+   #end = time.time()
+   #string.close()
+   #del string, val
+   #print "Time using native StringIO: %.2fs" %(end-begin)
+
+   GString_time = time_gstringc(5, 500000, 100)
+   cStringIO_time = time_cstringio(5, 500000, 100)
+   StringIO_time = time_stringio(5, 500000, 100)
+
+   #print "\n# Performance of gstringc.GString concat (+=) over cStringIO.write: %.2f%%" % (100-(GString_time*100.0/cStringIO_time))
 
 if __name__ == "__main__":
-   
-   for i in range(10, 41, 10):
-      run_tests(100000*2, i)
+   run_tests()
