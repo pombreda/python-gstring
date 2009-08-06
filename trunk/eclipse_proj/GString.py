@@ -265,7 +265,7 @@ def run_test1():
    end = time.time()
    print "Time using GLib (gstringc.GString+gstringc.GString): %.2fs" %(end-begin)
 
-   print "Timing the gstringc.GString+gstringc.GString of GLib..."
+   print "Timing the gstringc.GString+gstringc.GString of GLib (no initial size)..."
    gc.collect()
    time.sleep(1)
    text_to_add_gstring = gstringc.GString("x" * 40)
