@@ -261,9 +261,9 @@ GStringType_inplace_add(register PyObject *self, register PyObject *other)
 	register GStringType *self_cast = (GStringType*) self;
 
 	if(PyString_Check(other)) {
-		/*long new_size = self_cast->gstring->len + PyString_Size(other);
+		long new_size = self_cast->gstring->len + PyString_Size(other);
 		if(new_size > self_cast->gstring->allocated_len)
-			self_cast->gstring = g_string_set_size(self_cast->gstring, new_size);*/
+			self_cast->gstring = g_string_set_size(self_cast->gstring, new_size);
 
 		self_cast->gstring = g_string_append(self_cast->gstring, PyString_AS_STRING(other));
 		Py_INCREF(self);
