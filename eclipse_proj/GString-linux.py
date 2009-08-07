@@ -67,24 +67,9 @@ def time_stringio(n, iterations, str_len):
    return StringIO_time/float(n)
 
 def run_tests():
-   #print "Timing native StringIO..."
-   #gc.collect()
-   #time.sleep(2)
-   #begin = time.time()
-   #string = StringIO.StringIO()
-   #for i in xrange(iterations):
-   #   string.write(text_to_add)
-   #val = string.getvalue()
-   #end = time.time()
-   #string.close()
-   #del string, val
-   #print "Time using native StringIO: %.2fs" %(end-begin)
-
-   GString_time = time_gstringc(5, 500000, 100)
-   cStringIO_time = time_cstringio(5, 500000, 100)
-   StringIO_time = time_stringio(5, 500000, 100)
-
-   #print "\n# Performance of gstringc.GString concat (+=) over cStringIO.write: %.2f%%" % (100-(GString_time*100.0/cStringIO_time))
+   GString_time = time_gstringc(5, 500000, 10)
+   cStringIO_time = time_cstringio(5, 500000, 10)
+   StringIO_time = time_stringio(5, 500000, 10)
 
 if __name__ == "__main__":
    run_tests()
