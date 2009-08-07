@@ -61,7 +61,8 @@ GStringType_dealloc(PyObject *self)
 	GStringType *self_cast = (GStringType*) self;
 	if(self_cast->gstring != NULL)
 		g_string_free(self_cast->gstring, TRUE);
-	Py_TYPE(self)->tp_free(self);
+	self->ob_type->tp_free((PyObject*)self);
+
 }
 
 static PyObject*
@@ -228,7 +229,7 @@ GStringType_get_item(GStringType *self, PyObject* key)
 	else {
 		PyErr_Format(PyExc_TypeError,
 			     "string indices must be integers, not %.200s",
-			     Py_TYPE(key)->tp_name);
+			     ((PyObject*)key)->ob_type->tp_name);
 		return NULL;
 	}
 }
@@ -366,7 +367,7 @@ GStringType_set_item(GStringType *self, PyObject *key, PyObject *value)
 	else {
 		PyErr_Format(PyExc_TypeError,
 				 "string indices must be integers, not %.200s",
-				 Py_TYPE(key)->tp_name);
+				 ((PyObject*)key)->ob_type->tp_name);
 		return -1;
 	}
 }
