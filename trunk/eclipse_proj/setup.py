@@ -15,6 +15,7 @@ def pkgconfig(*packages, **kw):
    return kw
 
 if sys.platform.startswith("win"):
+	print "gstringc - Windows Platform"
 	mod_gstringc = Extension("gstringc",
                   sources=["gstringc.c"],
                   include_dirs=['C:\Arquivos de programas\Gtk+\include\glib-2.0',
@@ -32,6 +33,7 @@ if sys.platform.startswith("win"):
 
 
 elif sys.platform.startswith("linux"):
+	print "gstringc - Linux Platform"
 	mod_gstringc = Extension("gstringc",
                   sources=["gstringc.c"],
 						**pkgconfig('glib-2.0'))

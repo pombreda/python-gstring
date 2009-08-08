@@ -67,9 +67,10 @@ def time_stringio(n, iterations, str_len):
    return StringIO_time/float(n)
 
 def run_tests():
-   GString_time = time_gstringc(5, 500000, 10)
-   cStringIO_time = time_cstringio(5, 500000, 10)
-   StringIO_time = time_stringio(5, 500000, 10)
+   str_s = int(sys.argv[1])
+   GString_time = time_gstringc(5, 500000, str_s)
+   cStringIO_time = time_cstringio(5, 500000, str_s)
+   StringIO_time = time_stringio(5, 500000, str_s)
 
 if __name__ == "__main__":
    run_tests()
