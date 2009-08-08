@@ -33,13 +33,15 @@ GStringType_init(GStringType *self, PyObject *args, PyObject *kwds)
 	PyObject *text = NULL;
 
 	/* Oi LOL ! */
-	if(!PyArg_ParseTupleAndKeywords(args, kwds, "|Oi", kwlist, &text, &size))
+	if(G_LIKELY(!PyArg_ParseTupleAndKeywords(args, kwds, "|Oi", kwlist, &text, &size)))
 		return -1;
 
 	/* If the "text" is not present, use "" as default */
-	text = (text==NULL) ? PyString_FromString(DEFAULT_GSTRING_TEXT) : text;
+	if(text==NULL) {
+		text = PyString_FromString(DEFAULT_GSTRING_TEXT);
+	}
 
-	if(!PyString_Check(text))
+	if(G_UNLIKELY(!PyString_Check(text)))
 		text = PyObject_Str(text);
 
 	if(size>0) {
@@ -47,7 +49,7 @@ GStringType_init(GStringType *self, PyObject *args, PyObject *kwds)
 		self->gstring = g_string_assign(self->gstring, PyString_AS_STRING(text));
 	} else self->gstring = g_string_new(PyString_AS_STRING(text));
 
-	if(self->gstring==NULL) {
+	if(G_UNLIKELY(self->gstring==NULL)) {
 		PyErr_SetString(PyExc_MemoryError, "GLib::GString cannot allocate memory for GString");
 		return -1;
 	}
@@ -264,28 +266,18 @@ GStringType_inplace_add(register PyObject *self, register PyObject *other)
 {
 	register GStringType *self_cast = (GStringType*) self;
 
-	if(PyString_Check(other)) {
-		long new_size = self_cast->gstring->len + PyString_Size(other);
-		if(new_size > self_cast->gstring->allocated_len)
-			self_cast->gstring = g_string_set_size(self_cast->gstring, new_size);
-
+	if(G_LIKELY(PyString_Check(other))) {
 		self_cast->gstring = g_string_append(self_cast->gstring, PyString_AS_STRING(other));
 		Py_INCREF(self);
 		return self;
-	}
-
-	if(PyObject_TypeCheck(other, &GStringPyType)) {
-		long new_size = self_cast->gstring->len + ((GStringType*)other)->gstring->len;
-		if(new_size > self_cast->gstring->allocated_len)
-			self_cast->gstring = g_string_set_size(self_cast->gstring, new_size);
-
+	} else if(PyObject_TypeCheck(other, &GStringPyType)) {
 		self_cast->gstring = g_string_append(self_cast->gstring, ((GStringType*)other)->gstring->str);
 		Py_INCREF(self);
 		return self;
+	} else {
+		Py_INCREF(Py_NotImplemented);
+		return Py_NotImplemented;
 	}
-
-	Py_INCREF(Py_NotImplemented);
-	return Py_NotImplemented;
 }
 
 static PyObject*
