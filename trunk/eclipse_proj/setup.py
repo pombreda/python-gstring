@@ -24,7 +24,7 @@ if sys.platform.startswith("win"):
                   libraries=['glib-2.0'])
 
 	setup(name='python-gstringc',
-			version='1.1',
+			version='1.0',
 			description='A fast Python extension for GLib::GString.',
 			author=__author__,
 			author_email=__authormail__,
@@ -39,7 +39,7 @@ elif sys.platform.startswith("linux"):
 						**pkgconfig('glib-2.0'))
 
 	setup(name='python-gstringc',
-			version='1.1',
+			version='1.0',
 			description='A fast Python extension for GLib::GString.',
 			author=__author__,
 			author_email=__authormail__,

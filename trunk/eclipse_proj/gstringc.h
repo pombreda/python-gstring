@@ -24,7 +24,7 @@
 #ifndef GSTRINGC_H_
 #define GSTRINGC_H_
 
-#define DEFAULT_GSTRING_SIZE 128
+#define DEFAULT_GSTRING_SIZE 0
 #define DEFAULT_GSTRING_TEXT ""
 
 typedef struct {
