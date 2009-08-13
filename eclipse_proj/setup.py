@@ -3,10 +3,9 @@ import commands
 from distutils.core import setup
 from distutils.extension import Extension
 
+# Setup.py 
 __author__ = "Christian S. Perone"
 __authormail__ = "christian.perone@gmail.com"
-
-
 
 def pkgconfig(*packages, **kw):
    flag_map = {'-I': 'include_dirs', '-L': 'library_dirs', '-l': 'libraries'}
